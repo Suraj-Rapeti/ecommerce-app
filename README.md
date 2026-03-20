@@ -82,21 +82,54 @@ This project aims to solve:
 ## 🗂️ Project Structure
 
 ```
-src/
-├── components/
-├── pages/
-│   ├── Home.js
-│   ├── Products.js
-│   ├── ProductDetail.js
-│   ├── Cart.js
-│   ├── Checkout.js
-│   ├── Login.js
-│   ├── Admin.js
-│   └── MyOrders.js
-├── lib/
-│   ├── firebase.js
-│   ├── cart-context.js
-│   └── products.js
+ecommerce-app/
+├── .gitignore
+├── .env
+├── package.json
+├── package-lock.json
+├── postcss.config.js
+├── tailwind.config.js
+├── README.md
+├── public/
+│   ├── favicon.ico
+│   ├── index.html
+│   ├── logo192.png
+│   ├── logo512.png
+│   ├── manifest.json
+│   └── robots.txt
+└── src/
+    ├── App.css
+    ├── App.js
+    ├── index.css
+    ├── index.js
+    ├── components/
+    │   ├── navbar.js
+    │   ├── product-card.js
+    │   ├── theme-provider.js
+    │   ├── theme-toggle.js
+    │   └── ui/
+    │       ├── badge.js
+    │       ├── button.js
+    │       ├── card.js
+    │       ├── chart.js
+    │       ├── input.js
+    │       └── label.js
+    ├── context/
+    ├── lib/
+    │   ├── cart-context.js
+    │   ├── firebase.js
+    │   ├── products.js
+    │   ├── uploadProducts.js
+    │   └── utils.js
+    └── pages/
+        ├── Admin.js
+        ├── Cart.js
+        ├── Checkout.js
+        ├── Home.js
+        ├── Login.js
+        ├── MyOrders.js
+        ├── ProductDetail.js
+        └── Products.js
 ```
 
 ---
