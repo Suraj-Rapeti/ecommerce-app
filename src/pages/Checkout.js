@@ -16,7 +16,6 @@ export default function Checkout() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [confirmedOrder, setConfirmedOrder] = useState(null);
-  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState('credit-card');
   
@@ -41,7 +40,6 @@ export default function Checkout() {
       if (!currentUser) {
         navigate('/login');
       } else {
-        setUser(currentUser);
         setFormData(prev => ({
           ...prev,
           email: currentUser.email || ''

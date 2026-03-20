@@ -227,7 +227,7 @@ export default function Login() {
 
           {/* Footer Info */}
           <p className="text-center mt-8 text-muted-foreground text-sm">
-            © 2024 Your Store. All rights reserved.
+            © 2026 ShopFlow. All rights reserved.
           </p>
 
         </div>
