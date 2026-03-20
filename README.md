@@ -121,7 +121,7 @@ src/lib/firebase.js
 ## ▶️ Run Locally
 
 ```bash
-git clone https://github.com/your-username/ecommerce-app.git
+git clone https://github.com/Suraj-Rapeti/ecommerce-app.git
 cd ecommerce-app
 npm install
 npm start
