@@ -15,8 +15,10 @@ export default function Checkout() {
   const { items, totalPrice, clearCart } = useCart();
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
-  const [ setUser] = useState(null);
+  const [confirmedOrder, setConfirmedOrder] = useState(null);
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [paymentMethod, setPaymentMethod] = useState('credit-card');
   
   const [formData, setFormData] = useState({
     email: '',
@@ -66,6 +68,17 @@ export default function Checkout() {
     setIsProcessing(true);
 
     try {
+      // Store order details before clearing cart
+      const orderDetails = {
+        items: items,
+        subtotal: totalPrice,
+        shipping: shipping,
+        tax: tax,
+        total: finalTotal,
+        formData: formData,
+        paymentMethod: paymentMethod
+      };
+
       await addDoc(collection(db, "orders"), {
       items,
       total: finalTotal,
@@ -73,9 +86,11 @@ export default function Checkout() {
       userEmail: auth.currentUser.email,
       createdAt: new Date(),
       status: 'Pending',
-      shippingAddress: formData
+      shippingAddress: formData,
+      paymentMethod: paymentMethod
 });
 
+      setConfirmedOrder(orderDetails);
       setOrderComplete(true);
       clearCart();
     } catch (error) {
@@ -95,23 +110,95 @@ export default function Checkout() {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <main className="max-w-md mx-auto py-20 px-4 pt-16">
-          <div className="bg-card border border-border rounded-lg p-8 text-center shadow-lg">
+        <main className="max-w-2xl mx-auto py-12 px-4 pt-16">
+          <div className="bg-card border border-border rounded-lg p-8 shadow-lg">
             <div className="flex justify-center mb-6">
               <div className="bg-green-500/10 rounded-full p-4">
                 <Check className="h-12 w-12 text-green-500" />
               </div>
             </div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Order Confirmed!</h1>
-            <p className="text-muted-foreground mb-6">
+            <h1 className="text-3xl font-bold text-foreground mb-2 text-center">Order Confirmed! 🎉</h1>
+            <p className="text-muted-foreground mb-6 text-center">
               Thank you for your purchase. Your order has been placed successfully.
             </p>
-            <div className="bg-muted rounded-lg p-4 mb-6 text-left">
-              <p className="text-sm text-muted-foreground mb-1">Order Total:</p>
-              <p className="text-2xl font-bold">₹{finalTotal.toFixed(2)}</p>
+
+            {/* Order Summary */}
+            <div className="bg-muted rounded-lg p-6 mb-6">
+              <h2 className="font-semibold text-foreground mb-4">Order Summary</h2>
+              
+              <div className="space-y-2 mb-6 pb-6 border-b border-border/50">
+                {confirmedOrder?.items.map((item, idx) => (
+                  <div key={idx} className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      {item.name} x {item.quantity}
+                    </span>
+                    <span className="text-foreground font-medium">
+                      ₹{(item.price * item.quantity).toFixed(2)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Price Breakdown */}
+              <div className="space-y-2 mb-6">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Subtotal</span>
+                  <span className="text-foreground">₹{confirmedOrder?.subtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Shipping</span>
+                  <span className="text-foreground font-medium">
+                    {confirmedOrder?.shipping === 0 ? (
+                      <span className="text-green-600">FREE</span>
+                    ) : (
+                      `₹${confirmedOrder?.shipping.toFixed(2)}`
+                    )}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Tax (8%)</span>
+                  <span className="text-foreground">₹{confirmedOrder?.tax.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Total */}
+              <div className="flex justify-between items-center p-3 bg-primary/5 rounded-lg">
+                <span className="font-bold text-foreground">Total Amount</span>
+                <span className="text-2xl font-bold text-primary">₹{confirmedOrder?.total.toFixed(2)}</span>
+              </div>
             </div>
-            <p className="text-sm text-muted-foreground mb-6">
-              A confirmation email has been sent to {formData.email}
+
+            {/* Delivery Info */}
+            <div className="bg-muted rounded-lg p-6 mb-6">
+              <h2 className="font-semibold text-foreground mb-4">Delivery Address</h2>
+              <div className="text-sm text-muted-foreground space-y-1">
+                <p>{confirmedOrder?.formData.firstName} {confirmedOrder?.formData.lastName}</p>
+                <p>{confirmedOrder?.formData.address}</p>
+                <p>{confirmedOrder?.formData.city}, {confirmedOrder?.formData.state} {confirmedOrder?.formData.zipCode}</p>
+                <p>📱 {confirmedOrder?.formData.phone}</p>
+                <p>📧 {confirmedOrder?.formData.email}</p>
+              </div>
+            </div>
+
+            {/* Payment Method */}
+            <div className="bg-muted rounded-lg p-6 mb-6">
+              <h2 className="font-semibold text-foreground mb-4">Payment Method</h2>
+              <div className="text-sm text-muted-foreground">
+                <p className="text-foreground font-medium">
+                  {confirmedOrder?.paymentMethod === 'cash-on-delivery' 
+                    ? '💵 Cash on Delivery' 
+                    : '💳 Credit/Debit Card'}
+                </p>
+                <p className="text-xs mt-1">
+                  {confirmedOrder?.paymentMethod === 'cash-on-delivery' 
+                    ? 'Payment will be collected at the time of delivery' 
+                    : 'Payment has been processed'}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-sm text-muted-foreground mb-6 text-center">
+              A confirmation email has been sent to <strong>{confirmedOrder?.formData.email}</strong>
             </p>
             <Button 
               className="w-full mb-3"
@@ -282,10 +369,51 @@ export default function Checkout() {
               </div>
             </div>
 
-            {/* Payment Information */}
+            {/* Payment Method Selection */}
+            <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-foreground mb-4">Payment Method</h2>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 p-4 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition"
+                     onClick={() => setPaymentMethod('credit-card')}>
+                  <input 
+                    type="radio" 
+                    id="credit-card" 
+                    name="payment-method"
+                    value="credit-card"
+                    checked={paymentMethod === 'credit-card'}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    className="w-4 h-4"
+                  />
+                  <Label htmlFor="credit-card" className="flex-1 cursor-pointer mb-0">
+                    <span className="font-medium text-foreground">Credit/Debit Card</span>
+                    <p className="text-xs text-muted-foreground">Secure payment with card</p>
+                  </Label>
+                </div>
+
+                <div className="flex items-center gap-3 p-4 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition"
+                     onClick={() => setPaymentMethod('cash-on-delivery')}>
+                  <input 
+                    type="radio" 
+                    id="cash-on-delivery" 
+                    name="payment-method"
+                    value="cash-on-delivery"
+                    checked={paymentMethod === 'cash-on-delivery'}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    className="w-4 h-4"
+                  />
+                  <Label htmlFor="cash-on-delivery" className="flex-1 cursor-pointer mb-0">
+                    <span className="font-medium text-foreground">Cash on Delivery</span>
+                    <p className="text-xs text-muted-foreground">Pay when you receive your order</p>
+                  </Label>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Information - Only show if Credit Card selected */}
+            {paymentMethod === 'credit-card' && (
             <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
               <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                <CreditCard className="h-5 w-5" /> Payment Information
+                <CreditCard className="h-5 w-5" /> Card Details
               </h2>
               <div className="space-y-4">
                 <div>
@@ -296,7 +424,7 @@ export default function Checkout() {
                     placeholder="John Doe"
                     value={formData.cardName}
                     onChange={handleChange}
-                    required
+                    required={paymentMethod === 'credit-card'}
                     className="mt-1.5"
                   />
                 </div>
@@ -309,7 +437,7 @@ export default function Checkout() {
                     value={formData.cardNumber}
                     onChange={handleChange}
                     maxLength="19"
-                    required
+                    required={paymentMethod === 'credit-card'}
                     className="mt-1.5"
                   />
                 </div>
@@ -323,7 +451,7 @@ export default function Checkout() {
                       value={formData.expiry}
                       onChange={handleChange}
                       maxLength="5"
-                      required
+                      required={paymentMethod === 'credit-card'}
                       className="mt-1.5"
                     />
                   </div>
@@ -336,13 +464,15 @@ export default function Checkout() {
                       value={formData.cvv}
                       onChange={handleChange}
                       maxLength="4"
-                      required
+                      required={paymentMethod === 'credit-card'}
                       className="mt-1.5"
                     />
                   </div>
                 </div>
               </div>
             </div>
+            )}
+
           </div>
 
           {/* RIGHT - ORDER SUMMARY */}

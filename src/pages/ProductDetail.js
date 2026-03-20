@@ -55,6 +55,19 @@ export default function ProductDetail() {
     }
   };
 
+  const handleBuyNow = () => {
+    if (!user) {
+      alert('Please login to checkout');
+      navigate('/login');
+      return;
+    }
+    // Add to cart and go to checkout
+    for (let i = 0; i < quantity; i++) {
+      addToCart(product);
+    }
+    navigate('/checkout');
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -107,30 +120,47 @@ export default function ProductDetail() {
             </p>
 
             {/* Quantity */}
-            <div className="flex items-center gap-3 mt-6">
-              <button onClick={() => setQuantity(Math.max(1, quantity - 1))}>
-                <Minus />
+            <div className="flex items-center gap-3 mt-6 bg-muted rounded-lg p-3 w-fit">
+              <button 
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                className="p-1 hover:bg-background rounded transition"
+              >
+                <Minus className="h-4 w-4" />
               </button>
 
-              <span>{quantity}</span>
+              <span className="px-4 font-semibold text-foreground min-w-[2rem] text-center">{quantity}</span>
 
-              <button onClick={() => setQuantity(quantity + 1)}>
-                <Plus />
+              <button 
+                onClick={() => setQuantity(quantity + 1)}
+                className="p-1 hover:bg-background rounded transition"
+              >
+                <Plus className="h-4 w-4" />
               </button>
             </div>
 
             {/* Buttons */}
             <div className="flex gap-3 mt-6">
-              <Button onClick={handleAddToCart}>
+              <Button 
+                onClick={handleAddToCart}
+                variant="outline"
+              >
                 <ShoppingCart className="mr-2 h-4 w-4" />
-                Add to Cart
+                Add to Cart ({quantity})
+              </Button>
+
+              <Button 
+                onClick={handleBuyNow}
+                className="flex-1"
+              >
+                Buy Now
               </Button>
 
               <Button
                 variant="outline"
+                size="icon"
                 onClick={() => setIsWishlisted(!isWishlisted)}
               >
-                <Heart />
+                <Heart className={isWishlisted ? 'fill-red-500 text-red-500' : ''} />
               </Button>
             </div>
 

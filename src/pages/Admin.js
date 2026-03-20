@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { db, auth } from "../lib/firebase";
-import { collection, getDocs, updateDoc, doc } from "firebase/firestore";
+import { collection, getDocs, updateDoc, doc, onSnapshot, query, orderBy } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, RefreshCw } from "lucide-react";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { ThemeToggle } from "../components/theme-toggle";
@@ -38,28 +38,40 @@ export default function Admin() {
     return unsub;
   }, []);
 
-  // 📦 Fetch data
+  // 📦 Fetch data with REAL-TIME LISTENER
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const orderSnap = await getDocs(collection(db, "orders"));
+        // Real-time listener for orders
+        const ordersQuery = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+        const unsubscribe = onSnapshot(ordersQuery, (snapshot) => {
+          const orderData = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          setOrders(orderData);
+          console.log("Orders updated:", orderData.length);
+        });
+
+        // Fetch users (one-time)
         const userSnap = await getDocs(collection(db, "users"));
-
-        const orderData = orderSnap.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-
         const userData = userSnap.docs.map(doc => doc.data());
-
-        setOrders(orderData);
         setUsers(userData);
+
+        return unsubscribe;
       } catch (err) {
-        console.error(err);
+        console.error("Error fetching data:", err);
       }
     };
 
-    fetchData();
+    let unsubscribe;
+    fetchData().then(unsub => {
+      unsubscribe = unsub;
+    });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   // ⛔ Loading
@@ -84,17 +96,17 @@ export default function Admin() {
   // 🔄 UPDATE ORDER STATUS
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
+      console.log("Updating order:", orderId, "to status:", newStatus);
       await updateDoc(doc(db, "orders", orderId), {
-        status: newStatus
+        status: newStatus,
+        updatedAt: new Date()
       });
       
-      // Update local state
-      setOrders(orders.map(order => 
-        order.id === orderId ? { ...order, status: newStatus } : order
-      ));
+      console.log("Order status updated successfully");
+      // No need to manually update state - real-time listener will handle it
     } catch (error) {
       console.error("Error updating status:", error);
-      alert("Failed to update status");
+      alert("Failed to update status: " + error.message);
     }
   };
 
@@ -115,8 +127,16 @@ export default function Admin() {
   orders.forEach((order) => {
     if (!order.createdAt) return;
 
-    const date = order.createdAt.toDate();
-    const month = date.toLocaleString("default", { month: "short" });
+    let date;
+    if (order.createdAt.toDate) {
+      date = order.createdAt.toDate();
+    } else if (typeof order.createdAt === 'number') {
+      date = new Date(order.createdAt);
+    } else {
+      date = new Date(order.createdAt);
+    }
+
+    const month = date.toLocaleString("default", { month: "short", year: "numeric" });
 
     if (!monthlyMap[month]) {
       monthlyMap[month] = { month, revenue: 0, orders: 0 };
@@ -128,8 +148,8 @@ export default function Admin() {
 
   const revenueData = Object.values(monthlyMap);
 
-  // Recent orders
-  const recentOrders = orders.slice(-5).reverse();
+  // Recent orders (last 10)
+  const recentOrders = orders.slice(0, 10);
 
   return (
     <div className="min-h-screen bg-background pt-16">
@@ -197,47 +217,59 @@ export default function Admin() {
 
       {/* RECENT ORDERS */}
       <div className="p-6">
-        <h2 className="text-lg font-semibold mb-4">Recent Orders</h2>
+        <h2 className="text-lg font-semibold mb-4">
+          Recent Orders ({orders.length} total)
+        </h2>
 
         {recentOrders.length === 0 ? (
-          <p>No orders yet</p>
+          <div className="border border-dashed p-6 rounded text-center text-muted-foreground">
+            <p>No orders yet</p>
+          </div>
         ) : (
           <div className="space-y-3">
-            {recentOrders.map((order, i) => (
-              <div key={order.id} className="border p-4 rounded bg-card">
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <p><strong>Order:</strong> {order.id}</p>
-                    <p>Customer: {order.userEmail}</p>
-                    <p>Total: ₹{order.total}</p>
-                  </div>
-                  <Badge className={`${STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-800'}`}>
-                    {order.status || 'Pending'}
-                  </Badge>
-                </div>
-                
-                <div className="mb-3">
-                  <p className="text-sm font-semibold mb-2">Update Status:</p>
-                  <div className="flex gap-2 flex-wrap">
-                    {STATUS_OPTIONS.map((status) => (
-                      <Button
-                        key={status}
-                        size="sm"
-                        variant={order.status === status ? "default" : "outline"}
-                        onClick={() => updateOrderStatus(order.id, status)}
-                      >
-                        {status}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
+            {recentOrders.map((order, i) => {
+              const orderDate = order.createdAt?.toDate
+                ? order.createdAt.toDate().toLocaleString()
+                : new Date(order.createdAt).toLocaleString();
 
-                <div className="text-sm text-muted-foreground">
-                  <p>Items: {order.items?.length}</p>
-                  <p>Date: {order.createdAt?.toDate ? order.createdAt.toDate().toLocaleString() : "N/A"}</p>
+              return (
+                <div key={order.id} className="border p-4 rounded bg-card hover:shadow-md transition-shadow">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <p><strong>Order ID:</strong> {order.id?.substring(0, 12)}...</p>
+                      <p className="text-sm text-muted-foreground">Customer: {order.userEmail}</p>
+                      <p className="font-semibold mt-1">Total: ₹{order.total?.toFixed(2)}</p>
+                    </div>
+                    <Badge className={`${STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-800'}`}>
+                      {order.status || 'Pending'}
+                    </Badge>
+                  </div>
+                  
+                  <div className="mb-3 p-3 bg-muted rounded">
+                    <p className="text-sm font-semibold mb-2">Update Status:</p>
+                    <div className="flex gap-2 flex-wrap">
+                      {STATUS_OPTIONS.map((status) => (
+                        <Button
+                          key={status}
+                          size="sm"
+                          variant={order.status === status ? "default" : "outline"}
+                          onClick={() => updateOrderStatus(order.id, status)}
+                          disabled={order.status === status}
+                        >
+                          {status}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <p>Items: {order.items?.length || 0}</p>
+                    <p>Date: {orderDate}</p>
+                    <p>Address: {order.shippingAddress?.address}, {order.shippingAddress?.city}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
