@@ -28,7 +28,7 @@ Users often face:
 
 This project aims to solve:
 
-> **“How can we improve the end-to-end e-commerce experience, especially post-purchase visibility and system transparency?”**
+ **“How can we improve the end-to-end e-commerce experience, especially post-purchase visibility and system transparency?”**
 
 ---
 
