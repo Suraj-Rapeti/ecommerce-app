@@ -412,7 +412,7 @@ export default function Checkout() {
             <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
               <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                 <CreditCard className="h-5 w-5" /> Card Details
-              </h2> 
+              </h2>
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="cardName">Cardholder Name</Label>
