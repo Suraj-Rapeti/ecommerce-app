@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { db, auth } from "../lib/firebase";
-import { collection, getDocs, updateDoc, doc, onSnapshot, query, orderBy } from "firebase/firestore";
+import { collection, updateDoc, doc, onSnapshot, query, orderBy } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
-import { ArrowLeft, RefreshCw } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { ThemeToggle } from "../components/theme-toggle";
@@ -40,38 +40,38 @@ export default function Admin() {
 
   // 📦 Fetch data with REAL-TIME LISTENER
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Real-time listener for orders
-        const ordersQuery = query(collection(db, "orders"), orderBy("createdAt", "desc"));
-        const unsubscribe = onSnapshot(ordersQuery, (snapshot) => {
-          const orderData = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }));
-          setOrders(orderData);
-          console.log("Orders updated:", orderData.length);
-        });
+    try {
+      // Real-time listener for orders
+      const ordersQuery = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+      const ordersUnsubscribe = onSnapshot(ordersQuery, (snapshot) => {
+        const orderData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setOrders(orderData);
+        console.log("Orders updated:", orderData.length);
+      }, (err) => {
+        console.error("Error fetching orders:", err);
+      });
 
-        // Fetch users (one-time)
-        const userSnap = await getDocs(collection(db, "users"));
-        const userData = userSnap.docs.map(doc => doc.data());
+      // Real-time listener for users
+      const usersUnsubscribe = onSnapshot(collection(db, "users"), (snapshot) => {
+        const userData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
         setUsers(userData);
+      }, (err) => {
+        console.error("Error fetching users:", err);
+      });
 
-        return unsubscribe;
-      } catch (err) {
-        console.error("Error fetching data:", err);
-      }
-    };
-
-    let unsubscribe;
-    fetchData().then(unsub => {
-      unsubscribe = unsub;
-    });
-
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
+      return () => {
+        ordersUnsubscribe();
+        usersUnsubscribe();
+      };
+    } catch (err) {
+      console.error("Error setting up listeners:", err);
+    }
   }, []);
 
   // ⛔ Loading
