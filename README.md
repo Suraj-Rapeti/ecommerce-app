@@ -3,6 +3,9 @@
 A full-stack e-commerce web application built using **React, Firebase, and Tailwind CSS**, designed as a **product management project** focusing on user experience, order tracking, and admin analytics.
 
 ---
+## 🚀 Live Demo
+
+👉 [Click here to view the app](https://shopflow-surajrapeti.vercel.app/)
 
 ## 🚀 Overview
 
