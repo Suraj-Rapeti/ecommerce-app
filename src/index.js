@@ -5,16 +5,19 @@ import './index.css';
 import App from './App';
 import { CartProvider } from './lib/cart-context';
 import { ThemeProvider } from './components/theme-provider';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <BrowserRouter>
-      <ThemeProvider>
-        <CartProvider>
-          <App />
-        </CartProvider>
-      </ThemeProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <ThemeProvider>
+          <CartProvider>
+            <App />
+          </CartProvider>
+        </ThemeProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   </React.StrictMode>
 );

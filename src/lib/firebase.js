@@ -11,6 +11,17 @@ const firebaseConfig = {
   appId: process.env.REACT_APP_APP_ID
 };
 
+// Validate that all required config values are present
+const requiredKeys = ['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId'];
+const missingKeys = requiredKeys.filter(key => !firebaseConfig[key]);
+
+if (missingKeys.length > 0) {
+  console.error('❌ Missing Firebase environment variables:', missingKeys);
+  console.error('📋 Firebase Config:', firebaseConfig);
+  throw new Error(`Missing Firebase configuration: ${missingKeys.join(', ')}. Check your environment variables.`);
+}
+
+console.log('✅ Firebase configuration loaded successfully');
 
 const app = initializeApp(firebaseConfig);
 
