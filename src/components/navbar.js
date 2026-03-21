@@ -263,6 +263,43 @@ export function Navbar() {
           </Button>
 
         </div>
+
+        {/* MOBILE MENU DROPDOWN */}
+        {isMenuOpen && (
+          <div className="absolute top-16 left-0 right-0 md:hidden bg-background border-b shadow-lg">
+            <div className="flex flex-col gap-2 px-4 py-4 max-w-7xl mx-auto">
+              
+              {/* SEARCH - Mobile */}
+              <div className="flex lg:hidden w-full relative mb-3">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" />
+                <Input
+                  placeholder="Search..."
+                  className="pl-9 w-full"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleSearch}
+                />
+              </div>
+
+              {/* NAV LINKS */}
+              {navLinks.map((link) => {
+                const Icon = link.icon;
+                return (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Button variant="ghost" className="w-full justify-start">
+                      <Icon className="mr-2 h-4 w-4" />
+                      {link.label}
+                    </Button>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </header>
   );
